@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# Copyright (C) 2012 OpenWrt.org
+#
+
+[ -e /etc/config/network ] && exit 0
+
+touch /etc/config/network
+
+. /lib/functions/uci-defaults.sh
+. /lib/brcm63xx.sh
+
+ucidef_set_interface_loopback
+
+case "$board_name" in
+
+96328avng |\
+963281TAN |\
+96348A-122 |\
+96358-502V |\
+CT6373-1 |\
+AW4339U |\
+CPVA642 |\
+CT536_CT5621 |\
+D-4P-W |\
+NB6 |\
+SPW303V |\
+SPW500V |\
+V2110 |\
+96348W3)
+	ucidef_set_interface_lan "eth0"
+	;;
+
+AW4139)
+	ucidef_set_interface_lan "eth0.1"
+	ucidef_add_switch "eth0" "1" "1"
+	ucidef_add_switch_vlan "eth0" "1" "0 1 2 3 4 5t"
+	;;
+
+DVG3810BN)
+	ucidef_set_interfaces_lan_wan "eth1.1" "eth0"
+	ucidef_add_switch "eth1" "1" "1"
+	ucidef_add_switch_vlan "eth1" "1" "0 1 2 3 4 5t"
+	;;
+
+RG100A-AA)
+	ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+    uci batch <<EOF
+set network.eth0=switch
+set network.eth0.reset='1'
+set network.eth0.enable_vlan='1'
+EOF
+	ucidef_add_switch_vlan "eth0" "1" "0 1 2 5t"
+	ucidef_add_switch_vlan "eth0" "2" "3 5t"
+	;;
+
+*)
+	ucidef_set_interfaces_lan_wan "eth1" "eth0"
+	;;
+
+esac
+
+uci commit network
+
+exit 0
